@@ -54,16 +54,18 @@ def update(X_p, P_p, H, z, R):
 ##############################################################################
 #................... Initialize all of the Pygame modules ...................#
 pygame.init()
-window = pygame.display.set_mode((1024, 768), DOUBLEBUF)
+window = pygame.display.set_mode((800, 800), DOUBLEBUF)
 screen = pygame.display.get_surface()
 pygame.display.flip()
-scale = 500
+scale = 100
 pygame.display.set_caption("Kalman Filter -  Simplified motion model - 2D Robot")
 
 # initializaton
 r = 0.1
 dt = 1/8
-ur = 2; ul = 2
+ur = 10; ul = 10;
+alpha=2;
+beta=1;
 rx= 0.05; ry= 0.075;
 wx=0.10; wy=0.15;
 A = np.eye(2)
@@ -71,19 +73,19 @@ B = dt*A
 X = np.array([[0], [0]])
 P = np.zeros((2,2))
 H = np.array([[1,0],[0,2]])
-Q=np.array([[wx**2, 0],[0, wy**2]]);
-R=np.array([[ rx**2,0],[0,ry**2]]);
+Q=np.array([[wx**alpha, 0],[0, wy**alpha]]);
+R=np.array([[ rx**alpha,0],[0,ry**alpha]]);
 Xv=np.array([[0],[0]])
 
-sf=120; # scale factor for displaying covariance error ellipse 
+sf=80; # scale factor for displaying covariance error ellipse 
 trace = [(0, 0), (0, 0)]
 GT = [(0, 0), (0, 0)]
 i = 0
-screen.fill((0,0,0))
+screen.fill((127,150,150))
 #image = pygame.image.load('drone.png')
 while True:
     i += 1
-    pygame.time.delay(100)
+    pygame.time.delay(200)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit(); sys.exit();
@@ -91,9 +93,9 @@ while True:
     #screen.blit(image, (100, 0))
     #pygame.transform.scale(screen, ((8,8)))
     
-    if i<999:
+    if i<99:
         # predict
-        W=np.array([[np.random.normal(0,wx**2)],[np.random.normal(0,wy**2)]]);
+        W=np.array([[np.random.normal(0,wx**beta)],[np.random.normal(0,wy**beta)]]);
         u=np.array([[r/2*(ur+ul)],[r/2*(ur+ul)]])+W
         X, P = predict ( X, P, A, B, u, Q)
         
@@ -106,28 +108,26 @@ while True:
         trace[0] = trace[1]
         
         GT[1] = (dt*i*r/2*(ur+ul)*scale, dt*i*r/2*(ur+ul)*scale)
-        pygame.draw.lines(screen, (0, 250, 100), False, GT, 1)
+        pygame.draw.lines(screen, (0, 250, 100), False, GT, 2)
         GT[0] = GT[1]
         
         
         if i%8==0:
             # update
-            rxy=np.array([[np.random.normal(0,rx**2)],[np.random.normal(0,ry**2)]]);
+            rxy=np.array([[np.random.normal(0,rx**beta)],[np.random.normal(0,ry**beta)]]);
             z = H.dot(X)+rxy
             X, P , K = update (X, P, H, z, R)
             Xv=np.append(Xv,X,1)
             
         #screen.blit(robot, (int(rex), int(rey)))
-        pygame.draw.rect(screen, (255, 255, 1), (int(rex), int(rey), 5, 5))
-
-        
-        pygame.draw.ellipse(screen, (180, 40, 20), (rex-Px, rey-Py, 2*Px, 2*Py), 2)
+        pygame.draw.circle(screen, (255, 250, 25), (int(rex), int(rey)), 3)
+        pygame.draw.ellipse(screen, (180, 40, 20), (rex-Px, rey-Py, 2*Px, 2*Py), 1)
             
 
     pygame.display.update()
     
-    if X[0][0]>1.3:
-        pygame.quit()
+    #if X[0][0]>1.3:
+     #   pygame.quit()
 
 
 #plt.plot(Xv[0,:], Xv[1,:])
